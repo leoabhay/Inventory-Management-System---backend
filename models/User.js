@@ -10,7 +10,8 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     password: {
         type: String,
@@ -18,16 +19,22 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-// const User = mongoose.model("User", userSchema);
-
 //validation using joi
-// const validate = (data) => {
-//     const schema = Joi.object({
-//         name: Joi.string().required.label("Full Name"),
-//         email: Joi.string().email().label("Email"),
-//         password: passwordComplexity().required().label("Password")
-//     });
-//     return schema.validate(data);
-// };
+const validate = (data) => {
+    const schema = Joi.object({
+        name: Joi.string().required().label("Full Name"),
+        email: Joi.string().email().required().label("Email"),
+        password: passwordComplexity().required().label("Password"),
+        confirmPassword: Joi.string()
+                .valid(Joi.ref('password'))
+                .required()
+                .label("Confirm Password")
+                .messages({'any.only': 'Passwords do not match'}),
+    });
+    return schema.validate(data);
+};
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = {
+    User: mongoose.model('User', userSchema),
+    validate,
+};

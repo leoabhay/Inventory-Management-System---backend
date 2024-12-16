@@ -16,7 +16,7 @@ app.use(express.json());
 //middleware
 app.use('/api/auth', authRoutes);
 app.use('/api/stock', stockRoutes);
-app.use('api/order', orderRoutes);
+app.use('/api/order', orderRoutes);
 
 
 //server

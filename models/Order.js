@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-    userId: {
+    userName: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    productId: {
+    productName: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Stock',
         required: true
@@ -19,7 +19,7 @@ const orderSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    status:{
+    status: { // Status of the order
         type: String,
         default: 'Pending'
     }
