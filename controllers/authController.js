@@ -2,6 +2,20 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const {User, validate} = require('../models/User');
 
+// Authorization Middleware
+exports.authorize = (req, res, next) => {
+    const token = req.header("Authorization");
+    if (!token) return res.status(401).json({ message: "No token, authorization denied" });
+  
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+      req.user = decoded; // Attach decoded user data to the request
+      next();
+    } catch (error) {
+      res.status(401).json({ message: "Invalid token" });
+    }
+  };
+
 //signup controller
 exports.signup = async (req,res) => {
     const{name, email, password, confirmPassword} = req.body;
@@ -23,6 +37,8 @@ exports.signup = async (req,res) => {
 
         //hash the password and save new user
         const hashedPassword = await bcrypt.hash(password, 10);
+
+        //create and save new user
         const newUser = new User ({name, email, password: hashedPassword});
         await newUser.save();
 
@@ -52,11 +68,39 @@ exports.login = async (req,res) => {
         if (!isMatch) return res.status(400).json({message: 'Your password is incorrect'});
 
         //generate jwt token
-        const token = jwt.sign({userId: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1h'});
-        res.json({token});
+        const token = jwt.sign({userId: user._id, name: user.name, email: user.email }, process.env.JWT_SECRET_KEY, { expiresIn: '8h'});
+
+         // Send the response with the token
+        res.status(200).json({
+        message: 'Login successful',
+        token: token, // Send the token in response
+        });
 
     }catch(err){
         console.error('Error in login:', err);
         res.status(500).json({message: 'Internal server error'})
     }
+};
+
+
+//get profile controller
+exports.profile = async(req,res) => {
+    const { userId } = req.user;
+
+    try{
+        console.log("Profile request received:", req.user);
+
+        const user = await User.findById(userId).select("-password");  //excluding password
+        if(!user) return res.status(404).json({message: 'User not found'});
+
+        res.status(201).json({
+            name: user.name,
+            email: user.email,
+            avatar: "https://via.placeholder.com/150"
+        });
+
+    }catch(err){
+        console.error('Error in get profile:', err);
+        res.status(500).json({message: 'Internal server error'})
+    };
 };
